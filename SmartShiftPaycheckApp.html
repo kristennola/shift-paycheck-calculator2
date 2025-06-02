@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Shift Paycheck Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background-color: #f4f6f8;
+    }
+    h1 {
+      text-align: center;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background: #e8f5e9;
+      border: 1px solid #c8e6c9;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🕒 Shift Paycheck Calculator</h1>
+
+  <label>Base Hourly Wage ($)</label>
+  <input type="number" id="base" value="30">
+
+  <label>Shift Start Time</label>
+  <input type="datetime-local" id="startTime">
+
+  <label>Shift End Time</label>
+  <input type="datetime-local" id="endTime">
+
+  <label>Evening Diff ($)</label>
+  <input type="number" id="eveningDiff" value="3">
+
+  <label>Night Diff ($)</label>
+  <input type="number" id="nightDiff" value="5">
+
+  <label>Weekend Diff ($)</label>
+  <input type="number" id="weekendDiff" value="5">
+
+  <label>Overtime Rate (e.g., 1.5)</label>
+  <input type="number" id="otRate" value="1.5">
+
+  <label>Tax Estimate (%)</label>
+  <input type="number" id="tax" value="25">
+
+  <button onclick="calculate()">Show Me the Money 💸</button>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    function calculate() {
+      const base = parseFloat(document.getElementById('base').value);
+      const eveningDiff = parseFloat(document.getElementById('eveningDiff').value);
+      const nightDiff = parseFloat(document.getElementById('nightDiff').value);
+      const weekendDiff = parseFloat(document.getElementById('weekendDiff').value);
+      const otRate = parseFloat(document.getElementById('otRate').value);
+      const tax = parseFloat(document.getElementById('tax').value);
+
+      const start = new Date(document.getElementById('startTime').value);
+      const end = new Date(document.getElementById('endTime').value);
+
+      if (isNaN(start) || isNaN(end) || start >= end) {
+        document.getElementById('result').innerText = "⚠️ Please enter a valid start and end time.";
+        return;
+      }
+
+      let totalHours = 0, eveningHours = 0, nightHours = 0, weekendHours = 0;
+      const msPerHour = 3600000;
+      for (let t = new Date(start); t < end; t = new Date(t.getTime() + msPerHour)) {
+        totalHours++;
+
+        const hour = t.getHours();
+        const day = t.getDay(); // 0=Sun, 6=Sat
+
+        if (hour >= 15 && hour < 23) eveningHours++;
+        if (hour >= 23 || hour < 7) nightHours++;
+        if (day === 6 || day === 0 || (day === 5 && hour >= 23) || (day === 1 && hour < 7)) weekendHours++;
+      }
+
+      const regularPay = base * totalHours;
+      const eveningPay = eveningDiff * eveningHours;
+      const nightPay = nightDiff * nightHours;
+      const weekendPay = weekendDiff * weekendHours;
+      const gross = regularPay + eveningPay + nightPay + weekendPay;
+      const net = gross * (1 - tax / 100);
+
+      document.getElementById('result').innerHTML = `
+        <strong>Total Hours:</strong> ${totalHours}<br>
+        <strong>Evening Hours (3PM–11PM):</strong> ${eveningHours}<br>
+        <strong>Night Hours (11PM–7AM):</strong> ${nightHours}<br>
+        <strong>Weekend Hours:</strong> ${weekendHours}<br><br>
+
+        <strong>Regular Pay:</strong> $${regularPay.toFixed(2)}<br>
+        <strong>Evening Diff Pay:</strong> $${eveningPay.toFixed(2)}<br>
+        <strong>Night Diff Pay:</strong> $${nightPay.toFixed(2)}<br>
+        <strong>Weekend Diff Pay:</strong> $${weekendPay.toFixed(2)}<br><br>
+        <strong>Total Gross Pay:</strong> $${gross.toFixed(2)}<br>
+        <strong>Estimated Net Pay:</strong> $${net.toFixed(2)}
+      `;
+    }
+  </script>
+</body>
+</html>
